@@ -25,3 +25,7 @@ List of functions exposed by `mcp-shell`.
 | `archive.untar` | `src`, `dest`, `include?`, `exclude?` | `{extracted, files, duration_ms, error?}` | Extract a tar archive |
 | `text.diff` | `a`, `b`, `algo?` (`myers`\|`patience`) | `{unified_diff, duration_ms, error?}` | Compute unified diff between two strings |
 | `text.apply_patch` | `path`, `unified_diff`, `dry_run?` | `{patched, hunks_applied, hunks_failed, duration_ms, error?}` | Apply a unified diff patch to a file |
+| `doc.convert` | `src_path`, `dest_format`, `options?` | `{dest_path,size,duration_ms,error?}` | Convert documents via LibreOffice or Pandoc |
+| `pdf.extract_text` | `path`, `layout?` (`raw`\|`layout`\|`html`), `max_bytes?` | `{text,truncated,duration_ms,error?}` | Extract text from a PDF |
+| `spreadsheet.to_csv` | `path`, `sheet?` (name or index), `max_bytes?` | `{csv,truncated,duration_ms,error?}` | Convert a spreadsheet sheet to CSV |
+| `doc.metadata` | `path` | `{mime,pages?,words?,created?,modified?,duration_ms,error?}` | Retrieve document metadata |

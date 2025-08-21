@@ -15,6 +15,7 @@ import (
 	server "github.com/mark3labs/mcp-go/server"
 
 	"github.com/gaspardpetit/mcp-shell/internal/archive"
+	"github.com/gaspardpetit/mcp-shell/internal/doc"
 	"github.com/gaspardpetit/mcp-shell/internal/fs"
 	"github.com/gaspardpetit/mcp-shell/internal/shell"
 	"github.com/gaspardpetit/mcp-shell/internal/text"
@@ -259,6 +260,54 @@ func main() {
 		return mcp.NewToolResultStructured(resp, "text.apply_patch result"), nil
 	})
 	s.AddTool(textPatchTool, textPatchHandler)
+
+	// doc.convert
+	docConvertTool := mcp.NewTool(
+		"doc.convert",
+		mcp.WithDescription("Convert documents between formats"),
+		mcp.WithInputSchema[doc.ConvertRequest](),
+	)
+	docConvertHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args doc.ConvertRequest) (*mcp.CallToolResult, error) {
+		resp := doc.Convert(ctx, args)
+		return mcp.NewToolResultStructured(resp, "doc.convert result"), nil
+	})
+	s.AddTool(docConvertTool, docConvertHandler)
+
+	// pdf.extract_text
+	pdfExtractTool := mcp.NewTool(
+		"pdf.extract_text",
+		mcp.WithDescription("Extract text from a PDF file"),
+		mcp.WithInputSchema[doc.PDFExtractRequest](),
+	)
+	pdfExtractHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args doc.PDFExtractRequest) (*mcp.CallToolResult, error) {
+		resp := doc.ExtractText(ctx, args)
+		return mcp.NewToolResultStructured(resp, "pdf.extract_text result"), nil
+	})
+	s.AddTool(pdfExtractTool, pdfExtractHandler)
+
+	// spreadsheet.to_csv
+	sheetCSVTool := mcp.NewTool(
+		"spreadsheet.to_csv",
+		mcp.WithDescription("Convert a spreadsheet sheet to CSV"),
+		mcp.WithInputSchema[doc.ToCSVRequest](),
+	)
+	sheetCSVHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args doc.ToCSVRequest) (*mcp.CallToolResult, error) {
+		resp := doc.SpreadsheetToCSV(ctx, args)
+		return mcp.NewToolResultStructured(resp, "spreadsheet.to_csv result"), nil
+	})
+	s.AddTool(sheetCSVTool, sheetCSVHandler)
+
+	// doc.metadata
+	docMetaTool := mcp.NewTool(
+		"doc.metadata",
+		mcp.WithDescription("Retrieve document metadata"),
+		mcp.WithInputSchema[doc.MetadataRequest](),
+	)
+	docMetaHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args doc.MetadataRequest) (*mcp.CallToolResult, error) {
+		resp := doc.Metadata(ctx, args)
+		return mcp.NewToolResultStructured(resp, "doc.metadata result"), nil
+	})
+	s.AddTool(docMetaTool, docMetaHandler)
 
 	// ---- context & signals
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
