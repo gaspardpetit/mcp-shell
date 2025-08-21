@@ -10,7 +10,7 @@
 ## Overview
 
 - **Purpose**: Let an LLM run commands, inspect/transform files, process documents (Word/Excel/PowerPoint/PDF), and use common CLIs (Python, Node.js, Git, jq/yq, ripgrep, ImageMagick, ffmpeg, Tesseract, Pandoc, Poppler, DuckDB CLI, etc.).
-- **Primary tool**: `shell.exec` (run a shell command inside the container).
+- **Primary tools**: `shell.exec` (run a shell command) and `fs.*` (list, stat, read, write, and other basic filesystem ops).
 - **Security model**: Execution is confined to a non-root user in a container. You control:
   - Host mounts (read-only vs read-write).
   - Network egress (enable/disable at run-time).
@@ -150,7 +150,7 @@ curl -sS -H 'content-type: application/json' \
   -X POST http://127.0.0.1:3333/mcp/ \
   -d '{"jsonrpc":"2.0","method":"notifications/initialized"}' >/dev/null
 
-# 3) List tools (expect "shell.exec")
+# 3) List tools (expect "shell.exec" and "fs.*" tools)
 curl -sS -H 'content-type: application/json' -H "Mcp-Session-Id: $SID" \
   -X POST http://127.0.0.1:3333/mcp/ \
   -d '{"jsonrpc":"2.0","id":"2","method":"tools/list"}' | jq .

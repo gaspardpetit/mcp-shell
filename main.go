@@ -14,6 +14,7 @@ import (
 	mcp "github.com/mark3labs/mcp-go/mcp"
 	server "github.com/mark3labs/mcp-go/server"
 
+	"github.com/gaspardpetit/mcp-shell/internal/fs"
 	"github.com/gaspardpetit/mcp-shell/internal/shell"
 )
 
@@ -51,6 +52,115 @@ func main() {
 		return mcp.NewToolResultStructured(resp, "shell.exec result"), nil
 	})
 	s.AddTool(tool, handler)
+
+	// filesystem tools
+	// fs.list
+	fsListTool := mcp.NewTool(
+		"fs.list",
+		mcp.WithDescription("List directory entries"),
+		mcp.WithInputSchema[fs.ListRequest](),
+	)
+	fsListHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args fs.ListRequest) (*mcp.CallToolResult, error) {
+		resp := fs.List(ctx, args)
+		return mcp.NewToolResultStructured(resp, "fs.list result"), nil
+	})
+	s.AddTool(fsListTool, fsListHandler)
+
+	// fs.stat
+	fsStatTool := mcp.NewTool(
+		"fs.stat",
+		mcp.WithDescription("Get file or directory metadata"),
+		mcp.WithInputSchema[fs.StatRequest](),
+	)
+	fsStatHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args fs.StatRequest) (*mcp.CallToolResult, error) {
+		resp := fs.Stat(ctx, args)
+		return mcp.NewToolResultStructured(resp, "fs.stat result"), nil
+	})
+	s.AddTool(fsStatTool, fsStatHandler)
+
+	// fs.read
+	fsReadTool := mcp.NewTool(
+		"fs.read",
+		mcp.WithDescription("Read a UTF-8 text file"),
+		mcp.WithInputSchema[fs.ReadRequest](),
+	)
+	fsReadHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args fs.ReadRequest) (*mcp.CallToolResult, error) {
+		resp := fs.Read(ctx, args)
+		return mcp.NewToolResultStructured(resp, "fs.read result"), nil
+	})
+	s.AddTool(fsReadTool, fsReadHandler)
+
+	// fs.read_b64
+	fsReadB64Tool := mcp.NewTool(
+		"fs.read_b64",
+		mcp.WithDescription("Read a file and return base64 content"),
+		mcp.WithInputSchema[fs.ReadRequest](),
+	)
+	fsReadB64Handler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args fs.ReadRequest) (*mcp.CallToolResult, error) {
+		resp := fs.ReadB64(ctx, args)
+		return mcp.NewToolResultStructured(resp, "fs.read_b64 result"), nil
+	})
+	s.AddTool(fsReadB64Tool, fsReadB64Handler)
+
+	// fs.write
+	fsWriteTool := mcp.NewTool(
+		"fs.write",
+		mcp.WithDescription("Write a file"),
+		mcp.WithInputSchema[fs.WriteRequest](),
+	)
+	fsWriteHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args fs.WriteRequest) (*mcp.CallToolResult, error) {
+		resp := fs.Write(ctx, args)
+		return mcp.NewToolResultStructured(resp, "fs.write result"), nil
+	})
+	s.AddTool(fsWriteTool, fsWriteHandler)
+
+	// fs.remove
+	fsRemoveTool := mcp.NewTool(
+		"fs.remove",
+		mcp.WithDescription("Remove a file or directory"),
+		mcp.WithInputSchema[fs.RemoveRequest](),
+	)
+	fsRemoveHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args fs.RemoveRequest) (*mcp.CallToolResult, error) {
+		resp := fs.Remove(ctx, args)
+		return mcp.NewToolResultStructured(resp, "fs.remove result"), nil
+	})
+	s.AddTool(fsRemoveTool, fsRemoveHandler)
+
+	// fs.mkdir
+	fsMkdirTool := mcp.NewTool(
+		"fs.mkdir",
+		mcp.WithDescription("Create a directory"),
+		mcp.WithInputSchema[fs.MkdirRequest](),
+	)
+	fsMkdirHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args fs.MkdirRequest) (*mcp.CallToolResult, error) {
+		resp := fs.Mkdir(ctx, args)
+		return mcp.NewToolResultStructured(resp, "fs.mkdir result"), nil
+	})
+	s.AddTool(fsMkdirTool, fsMkdirHandler)
+
+	// fs.move
+	fsMoveTool := mcp.NewTool(
+		"fs.move",
+		mcp.WithDescription("Move or rename a file"),
+		mcp.WithInputSchema[fs.MoveRequest](),
+	)
+	fsMoveHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args fs.MoveRequest) (*mcp.CallToolResult, error) {
+		resp := fs.Move(ctx, args)
+		return mcp.NewToolResultStructured(resp, "fs.move result"), nil
+	})
+	s.AddTool(fsMoveTool, fsMoveHandler)
+
+	// fs.copy
+	fsCopyTool := mcp.NewTool(
+		"fs.copy",
+		mcp.WithDescription("Copy a file or directory"),
+		mcp.WithInputSchema[fs.CopyRequest](),
+	)
+	fsCopyHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args fs.CopyRequest) (*mcp.CallToolResult, error) {
+		resp := fs.Copy(ctx, args)
+		return mcp.NewToolResultStructured(resp, "fs.copy result"), nil
+	})
+	s.AddTool(fsCopyTool, fsCopyHandler)
 
 	// ---- context & signals
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
