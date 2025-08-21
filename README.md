@@ -11,6 +11,7 @@
 
 - **Purpose**: Let an LLM run commands, inspect/transform files, process documents (Word/Excel/PowerPoint/PDF), and use common CLIs (Python, Node.js, Git, jq/yq, ripgrep, ImageMagick, ffmpeg, Tesseract, Pandoc, Poppler, DuckDB CLI, etc.).
 - **Primary tool**: `shell.exec` (run a shell command inside the container).
+- **Function reference**: see [doc/functions.md](doc/functions.md) for supported functions.
 - **Security model**: Execution is confined to a non-root user in a container. You control:
   - Host mounts (read-only vs read-write).
   - Network egress (enable/disable at run-time).
