@@ -8,6 +8,9 @@ List of functions exposed by `mcp-shell`.
 | `GET /readyz` | none | `{status:"ok", name, version, uptime}` | Readiness probe |
 | `GET /mcp/health` | none | `{status:"ok", name, version, uptime}` | MCP-native health endpoint |
 | `shell.exec` | `cmd` (string, required), `cwd?`, `env?`, `timeout_ms?`, `stdin?`, `max_bytes?`, `dry_run?` | `{stdout, stderr, exit_code, duration_ms, stdout_truncated, stderr_truncated, error?}` | Execute a shell command in the container |
+| `python.run` | `code` (string, required), `args?`, `stdin?`, `venv?{name?,create_if_missing?}`, `packages?`, `timeout_ms?`, `max_bytes?` | `{stdout, stderr, exit_code, duration_ms, stdout_truncated, stderr_truncated, artifacts?, error?}` | Execute Python code, optionally in a virtual environment |
+| `node.run` | `code` (string, required), `args?`, `stdin?`, `packages?`, `timeout_ms?`, `max_bytes?` | `{stdout, stderr, exit_code, duration_ms, stdout_truncated, stderr_truncated, artifacts?, error?}` | Execute Node.js code |
+| `sh.script.write_and_run` | `shebang` (string, required), `content` (string, required), `cwd?`, `env?`, `timeout_ms?`, `max_bytes?` | `{stdout, stderr, exit_code, duration_ms, stdout_truncated, stderr_truncated, error?}` | Write a script to a temp file and run it |
 | `fs.list` | `path` (string), `glob?`, `include_hidden?`, `max_entries?` | `{entries:[{name,type,size,mtime,mode}], duration_ms, error?}` | List directory entries |
 | `fs.stat` | `path` (string) | `{type,size,mode,mtime,uid,gid,symlink_target?,duration_ms,error?}` | File or directory metadata |
 | `fs.read` | `path` (string), `max_bytes?`, `start_offset?` | `{content, truncated, duration_ms, error?}` | Read UTF-8 text file |

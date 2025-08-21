@@ -17,6 +17,7 @@ import (
 	"github.com/gaspardpetit/mcp-shell/internal/archive"
 	"github.com/gaspardpetit/mcp-shell/internal/doc"
 	"github.com/gaspardpetit/mcp-shell/internal/fs"
+	rt "github.com/gaspardpetit/mcp-shell/internal/runtime"
 	"github.com/gaspardpetit/mcp-shell/internal/shell"
 	"github.com/gaspardpetit/mcp-shell/internal/text"
 )
@@ -55,6 +56,42 @@ func main() {
 		return mcp.NewToolResultStructured(resp, "shell.exec result"), nil
 	})
 	s.AddTool(tool, handler)
+
+	// python.run
+	pyTool := mcp.NewTool(
+		"python.run",
+		mcp.WithDescription("Execute Python code, optionally in a virtual environment"),
+		mcp.WithInputSchema[rt.PythonRunRequest](),
+	)
+	pyHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args rt.PythonRunRequest) (*mcp.CallToolResult, error) {
+		resp := rt.PythonRun(ctx, args)
+		return mcp.NewToolResultStructured(resp, "python.run result"), nil
+	})
+	s.AddTool(pyTool, pyHandler)
+
+	// node.run
+	nodeTool := mcp.NewTool(
+		"node.run",
+		mcp.WithDescription("Execute Node.js code"),
+		mcp.WithInputSchema[rt.NodeRunRequest](),
+	)
+	nodeHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args rt.NodeRunRequest) (*mcp.CallToolResult, error) {
+		resp := rt.NodeRun(ctx, args)
+		return mcp.NewToolResultStructured(resp, "node.run result"), nil
+	})
+	s.AddTool(nodeTool, nodeHandler)
+
+	// sh.script.write_and_run
+	shTool := mcp.NewTool(
+		"sh.script.write_and_run",
+		mcp.WithDescription("Write a script to a temp file and run it"),
+		mcp.WithInputSchema[rt.ShRequest](),
+	)
+	shHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args rt.ShRequest) (*mcp.CallToolResult, error) {
+		resp := rt.ShScriptWriteAndRun(ctx, args)
+		return mcp.NewToolResultStructured(resp, "sh.script.write_and_run result"), nil
+	})
+	s.AddTool(shTool, shHandler)
 
 	// filesystem tools
 	// fs.list
