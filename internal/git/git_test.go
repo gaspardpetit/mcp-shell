@@ -17,11 +17,12 @@ func TestCloneDisabled(t *testing.T) {
 }
 
 func TestStatusAndCommit(t *testing.T) {
-	dir, err := os.MkdirTemp(workspaceRoot(), "git-test-")
+	root := t.TempDir()
+	t.Setenv("WORKSPACE", root)
+	dir, err := os.MkdirTemp(root, "git-test-")
 	if err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
-	defer os.RemoveAll(dir)
 	cmd := exec.Command("git", "init", dir)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("git init: %v (%s)", err, out)
