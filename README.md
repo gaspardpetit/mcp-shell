@@ -11,6 +11,7 @@
 
 - **Purpose**: Let an LLM run commands, inspect/transform files, process documents (Word/Excel/PowerPoint/PDF), and use common CLIs (Python, Node.js, Git, jq/yq, ripgrep, ImageMagick, ffmpeg, Tesseract, Pandoc, Poppler, DuckDB CLI, etc.).
 - **Primary tools**: `shell.exec`, `fs.*` (list, stat, read, write, search, etc.), and text utilities like `text.diff` and `text.apply_patch`.
+- **Dependencies**: `fs.search` relies on the `rg` binary (ripgrep); install it to enable content search.
 - **Function reference**: see [doc/functions.md](doc/functions.md) for supported functions.
 - **Security model**: Execution is confined to a non-root user in a container. You control:
   - Host mounts (read-only vs read-write).

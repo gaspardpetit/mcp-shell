@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 )
@@ -93,6 +94,9 @@ func TestReadBinaryFails(t *testing.T) {
 }
 
 func TestSearch(t *testing.T) {
+	if _, err := exec.LookPath("rg"); err != nil {
+		t.Skip("rg not installed")
+	}
 	ctx := context.Background()
 	ws := t.TempDir()
 	t.Setenv("WORKSPACE", ws)

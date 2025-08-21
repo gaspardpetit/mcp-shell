@@ -679,6 +679,9 @@ func Search(ctx context.Context, in SearchRequest) SearchResponse {
 	if err != nil {
 		return SearchResponse{DurationMs: time.Since(start).Milliseconds(), Error: err.Error()}
 	}
+	if _, err := exec.LookPath("rg"); err != nil {
+		return SearchResponse{DurationMs: time.Since(start).Milliseconds(), Error: "ripgrep (rg) not found"}
+	}
 	args := []string{"--json"}
 	if !in.Regex {
 		args = append(args, "--fixed-strings")

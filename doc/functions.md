@@ -17,6 +17,6 @@ List of functions exposed by `mcp-shell`.
 | `fs.mkdir` | `path`, `parents?`, `mode?` | `{created, duration_ms, error?}` | Create directory |
 | `fs.move` | `src`, `dest`, `overwrite?`, `parents?` | `{moved, duration_ms, error?}` | Move or rename a file |
 | `fs.copy` | `src`, `dest`, `overwrite?`, `parents?`, `recursive?` | `{copied, duration_ms, error?}` | Copy a file or directory |
-| `fs.search` | `path`, `query`, `regex?`, `glob?`, `case_sensitive?`, `max_results?` | `{matches:[{file,line,byte_offset,preview}], duration_ms, error?}` | Search file contents using ripgrep |
+| `fs.search` | `path`, `query`, `regex?`, `glob?`, `case_sensitive?`, `max_results?` | `{matches:[{file,line,byte_offset,preview}], duration_ms, error?}` | Search file contents using ripgrep (requires `rg`) |
 | `text.diff` | `a`, `b`, `algo?` (`myers`\|`patience`) | `{unified_diff, duration_ms, error?}` | Compute unified diff between two strings |
 | `text.apply_patch` | `path`, `unified_diff`, `dry_run?` | `{patched, hunks_applied, hunks_failed, duration_ms, error?}` | Apply a unified diff patch to a file |
