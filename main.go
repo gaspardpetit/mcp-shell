@@ -14,6 +14,7 @@ import (
 	mcp "github.com/mark3labs/mcp-go/mcp"
 	server "github.com/mark3labs/mcp-go/server"
 
+	"github.com/gaspardpetit/mcp-shell/internal/archive"
 	"github.com/gaspardpetit/mcp-shell/internal/fs"
 	"github.com/gaspardpetit/mcp-shell/internal/shell"
 	"github.com/gaspardpetit/mcp-shell/internal/text"
@@ -174,6 +175,66 @@ func main() {
 		return mcp.NewToolResultStructured(resp, "fs.search result"), nil
 	})
 	s.AddTool(fsSearchTool, fsSearchHandler)
+
+	// fs.hash
+	fsHashTool := mcp.NewTool(
+		"fs.hash",
+		mcp.WithDescription("Compute file checksum"),
+		mcp.WithInputSchema[fs.HashRequest](),
+	)
+	fsHashHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args fs.HashRequest) (*mcp.CallToolResult, error) {
+		resp := fs.Hash(ctx, args)
+		return mcp.NewToolResultStructured(resp, "fs.hash result"), nil
+	})
+	s.AddTool(fsHashTool, fsHashHandler)
+
+	// archive.zip
+	archiveZipTool := mcp.NewTool(
+		"archive.zip",
+		mcp.WithDescription("Create a zip archive"),
+		mcp.WithInputSchema[archive.ZipRequest](),
+	)
+	archiveZipHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args archive.ZipRequest) (*mcp.CallToolResult, error) {
+		resp := archive.Zip(ctx, args)
+		return mcp.NewToolResultStructured(resp, "archive.zip result"), nil
+	})
+	s.AddTool(archiveZipTool, archiveZipHandler)
+
+	// archive.unzip
+	archiveUnzipTool := mcp.NewTool(
+		"archive.unzip",
+		mcp.WithDescription("Extract a zip archive"),
+		mcp.WithInputSchema[archive.UnzipRequest](),
+	)
+	archiveUnzipHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args archive.UnzipRequest) (*mcp.CallToolResult, error) {
+		resp := archive.Unzip(ctx, args)
+		return mcp.NewToolResultStructured(resp, "archive.unzip result"), nil
+	})
+	s.AddTool(archiveUnzipTool, archiveUnzipHandler)
+
+	// archive.tar
+	archiveTarTool := mcp.NewTool(
+		"archive.tar",
+		mcp.WithDescription("Create a tar archive"),
+		mcp.WithInputSchema[archive.TarRequest](),
+	)
+	archiveTarHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args archive.TarRequest) (*mcp.CallToolResult, error) {
+		resp := archive.Tar(ctx, args)
+		return mcp.NewToolResultStructured(resp, "archive.tar result"), nil
+	})
+	s.AddTool(archiveTarTool, archiveTarHandler)
+
+	// archive.untar
+	archiveUntarTool := mcp.NewTool(
+		"archive.untar",
+		mcp.WithDescription("Extract a tar archive"),
+		mcp.WithInputSchema[archive.UntarRequest](),
+	)
+	archiveUntarHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args archive.UntarRequest) (*mcp.CallToolResult, error) {
+		resp := archive.Untar(ctx, args)
+		return mcp.NewToolResultStructured(resp, "archive.untar result"), nil
+	})
+	s.AddTool(archiveUntarTool, archiveUntarHandler)
 
 	// text.diff
 	textDiffTool := mcp.NewTool(

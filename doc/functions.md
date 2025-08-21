@@ -18,5 +18,10 @@ List of functions exposed by `mcp-shell`.
 | `fs.move` | `src`, `dest`, `overwrite?`, `parents?` | `{moved, duration_ms, error?}` | Move or rename a file |
 | `fs.copy` | `src`, `dest`, `overwrite?`, `parents?`, `recursive?` | `{copied, duration_ms, error?}` | Copy a file or directory |
 | `fs.search` | `path`, `query`, `regex?`, `glob?`, `case_sensitive?`, `max_results?` | `{matches:[{file,line,byte_offset,preview}], duration_ms, error?}` | Search file contents using ripgrep (requires `rg`) |
+| `fs.hash` | `path`, `algo` (`sha256`\|`sha1`\|`md5`) | `{hash, duration_ms, error?}` | Compute a file checksum |
+| `archive.zip` | `src`, `dest`, `include?`, `exclude?` | `{archive_path, files, duration_ms, error?}` | Create a zip archive |
+| `archive.unzip` | `src`, `dest`, `include?`, `exclude?` | `{extracted, files, duration_ms, error?}` | Extract a zip archive |
+| `archive.tar` | `src`, `dest`, `include?`, `exclude?` | `{archive_path, files, duration_ms, error?}` | Create a tar archive |
+| `archive.untar` | `src`, `dest`, `include?`, `exclude?` | `{extracted, files, duration_ms, error?}` | Extract a tar archive |
 | `text.diff` | `a`, `b`, `algo?` (`myers`\|`patience`) | `{unified_diff, duration_ms, error?}` | Compute unified diff between two strings |
 | `text.apply_patch` | `path`, `unified_diff`, `dry_run?` | `{patched, hunks_applied, hunks_failed, duration_ms, error?}` | Apply a unified diff patch to a file |

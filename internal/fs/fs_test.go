@@ -116,3 +116,20 @@ func TestSearch(t *testing.T) {
 		t.Fatalf("search regex/glob got %+v", resp)
 	}
 }
+
+func TestHash(t *testing.T) {
+	ctx := context.Background()
+	ws := t.TempDir()
+	t.Setenv("WORKSPACE", ws)
+	if err := os.WriteFile(filepath.Join(ws, "file.txt"), []byte("hello"), 0o644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	resp := Hash(ctx, HashRequest{Path: "file.txt", Algo: "sha256"})
+	expected := "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+	if resp.Error != "" || resp.Hash != expected {
+		t.Fatalf("hash got %+v", resp)
+	}
+	if resp := Hash(ctx, HashRequest{Path: "file.txt", Algo: "foo"}); resp.Error == "" {
+		t.Fatalf("expected error for unsupported algo")
+	}
+}

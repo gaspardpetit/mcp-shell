@@ -4,10 +4,15 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/md5"
+	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash"
 	"io"
 	stdfs "io/fs"
 	"os"
@@ -760,5 +765,56 @@ func Search(ctx context.Context, in SearchRequest) SearchResponse {
 			}
 		}
 	}
+	return resp
+}
+
+// ---- fs.hash
+
+type HashRequest struct {
+	Path string `json:"path"`
+	Algo string `json:"algo"`
+}
+
+type HashResponse struct {
+	Hash       string `json:"hash"`
+	DurationMs int64  `json:"duration_ms"`
+	Error      string `json:"error,omitempty"`
+}
+
+func Hash(ctx context.Context, in HashRequest) HashResponse {
+	start := time.Now()
+	path, err := normalizePath(in.Path)
+	if err != nil {
+		return HashResponse{DurationMs: time.Since(start).Milliseconds(), Error: err.Error()}
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		return HashResponse{DurationMs: time.Since(start).Milliseconds(), Error: err.Error()}
+	}
+	defer f.Close()
+	var h hash.Hash
+	switch strings.ToLower(in.Algo) {
+	case "", "sha256":
+		h = sha256.New()
+	case "sha1":
+		h = sha1.New()
+	case "md5":
+		h = md5.New()
+	default:
+		return HashResponse{DurationMs: time.Since(start).Milliseconds(), Error: "unsupported algo"}
+	}
+	if _, err := io.Copy(h, f); err != nil {
+		return HashResponse{DurationMs: time.Since(start).Milliseconds(), Error: err.Error()}
+	}
+	hashStr := hex.EncodeToString(h.Sum(nil))
+	resp := HashResponse{Hash: hashStr}
+	resp.DurationMs = time.Since(start).Milliseconds()
+	audit(struct {
+		TS         string `json:"ts"`
+		Tool       string `json:"tool"`
+		Path       string `json:"path"`
+		Algo       string `json:"algo"`
+		DurationMs int64  `json:"duration_ms"`
+	}{time.Now().UTC().Format(time.RFC3339), "fs.hash", path, in.Algo, resp.DurationMs})
 	return resp
 }
