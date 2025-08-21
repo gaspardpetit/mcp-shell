@@ -27,6 +27,15 @@ func TestStatusAndCommit(t *testing.T) {
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("git init: %v (%s)", err, out)
 	}
+	// configure user identity for commits
+	cmd = exec.Command("git", "-C", dir, "config", "user.email", "test@example.com")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("git config email: %v (%s)", err, out)
+	}
+	cmd = exec.Command("git", "-C", dir, "config", "user.name", "Test User")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("git config name: %v (%s)", err, out)
+	}
 	if err := os.WriteFile(filepath.Join(dir, "foo.txt"), []byte("hi"), 0o644); err != nil {
 		t.Fatalf("write file: %v", err)
 	}
