@@ -14,32 +14,127 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build:
+  build-tools:
+    if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
       id-token: write
-
     strategy:
       matrix:
         include:
           - name: light
-            branch: light
-            preset: light          # if your Dockerfile uses light|standard|full
-            dockerfile: Dockerfile
+            preset: light
             tag_prefix: "light-"
           - name: standard
-            branch: standard
             preset: standard
-            dockerfile: Dockerfile
             tag_prefix: ""
           - name: full
-            branch: full
             preset: full
-            dockerfile: Dockerfile
             tag_prefix: "full-"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
+      - name: Compute version metadata
+        id: meta
+        shell: bash
+        run: |
+          SHA=$(git rev-parse --short HEAD)
+          DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME}"
+            DESCRIBE="${GITHUB_REF_NAME}"
+          else
+            DESCRIBE="$(git describe --tags --always --dirty)"
+            VERSION="${DESCRIBE}"
+          fi
+          echo "version=${VERSION}"   >> $GITHUB_OUTPUT
+          echo "describe=${DESCRIBE}" >> $GITHUB_OUTPUT
+          echo "sha=${SHA}"           >> $GITHUB_OUTPUT
+          echo "date=${DATE}"         >> $GITHUB_OUTPUT
+          if [[ "${GITHUB_REF_TYPE}" == "tag" && "${GITHUB_REF_NAME}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            echo "major=${BASH_REMATCH[1]}" >> $GITHUB_OUTPUT
+            echo "minor=${BASH_REMATCH[2]}" >> $GITHUB_OUTPUT
+            echo "patch=${BASH_REMATCH[3]}" >> $GITHUB_OUTPUT
+            echo "is_clean_release=true"    >> $GITHUB_OUTPUT
+          else
+            echo "is_clean_release=false"   >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install cosign
+        if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@59acb6260d9c0ba8f4a2f9d9b48431a222b68e20
+        with:
+          cosign-release: 'v2.2.4'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226
+
+      - name: Log into registry ${{ env.REGISTRY }}
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata (tools ${{ matrix.name }})
+        id: dmeta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=tools-${{ matrix.tag_prefix }}sha-${{ steps.meta.outputs.sha }}
+            type=raw,value=tools-${{ matrix.tag_prefix }}main,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=tools-${{ matrix.tag_prefix }}desc-${{ steps.meta.outputs.describe }},enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=tools-${{ matrix.tag_prefix }}${{ github.ref_name }},enable=${{ steps.meta.outputs.is_clean_release == 'true' }}
+            type=raw,value=tools-${{ matrix.tag_prefix }}v${{ steps.meta.outputs.major }}.${{ steps.meta.outputs.minor }},enable=${{ steps.meta.outputs.is_clean_release == 'true' }}
+            type=raw,value=tools-${{ matrix.tag_prefix }}v${{ steps.meta.outputs.major }},enable=${{ steps.meta.outputs.is_clean_release == 'true' }}
+            type=raw,value=tools-${{ matrix.tag_prefix }}latest,enable=${{ steps.meta.outputs.is_clean_release == 'true' }}
+
+      - name: Build and push tool image ( ${{ matrix.name }} )
+        id: build-and-push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.tools
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.dmeta.outputs.tags }}
+          labels: ${{ steps.dmeta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            PRESET=${{ matrix.preset }}
+
+      - name: Sign the published tool image ( ${{ matrix.name }} )
+        if: ${{ github.event_name != 'pull_request' }}
+        env:
+          TAGS: ${{ steps.dmeta.outputs.tags }}
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+
+  build:
+    needs: build-tools
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    strategy:
+      matrix:
+        include:
+          - name: light
+            preset: light
+            tag_prefix: "light-"
+          - name: standard
+            preset: standard
+            tag_prefix: ""
+          - name: full
+            preset: full
+            tag_prefix: "full-"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -101,12 +196,21 @@ jobs:
             type=raw,value=${{ matrix.tag_prefix }}v${{ steps.meta.outputs.major }},enable=${{ steps.meta.outputs.is_clean_release == 'true' }}
             type=raw,value=${{ matrix.tag_prefix }}latest,enable=${{ steps.meta.outputs.is_clean_release == 'true' }}
 
+      - name: Determine base image tag
+        id: base
+        run: |
+          if [[ "${{ steps.meta.outputs.is_clean_release }}" == "true" ]]; then
+            echo "tag=tools-${{ matrix.tag_prefix }}sha-${{ steps.meta.outputs.sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=tools-${{ matrix.tag_prefix }}latest" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build and push Docker image ( ${{ matrix.name }} )
         id: build-and-push
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ${{ matrix.dockerfile }}
+          file: Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.dmeta.outputs.tags }}
           labels: ${{ steps.dmeta.outputs.labels }}
@@ -117,7 +221,7 @@ jobs:
             VERSION=${{ steps.meta.outputs.version }}
             GIT_SHA=${{ steps.meta.outputs.sha }}
             BUILD_DATE=${{ steps.meta.outputs.date }}
-            PRESET=${{ matrix.preset }}
+            BASE_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.base.outputs.tag }}
 
       - name: Sign the published Docker image ( ${{ matrix.name }} )
         if: ${{ github.event_name != 'pull_request' }}

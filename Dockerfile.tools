@@ -1,0 +1,159 @@
+FROM debian:bookworm-slim
+
+# ---- Build-time knobs (choose your preset) ----
+# light  -> smallest, shell + core utils + python basics + poppler + pandoc
+# standard -> adds LibreOffice, ImageMagick, ffmpeg, tesseract, DuckDB, Node.js LTS
+# full     -> standard + TeX subset for high-quality PDF via pandoc/xelatex
+ARG PRESET=standard
+
+# ---- Runtime knobs (can be overridden at run-time) ----
+ENV APP_USER=user \
+    APP_UID=10001 \
+    APP_GID=10001 \
+    APP_HOME=/home/user \
+    WORKSPACE=/workspace \
+    LOG_DIR=/logs \
+    PORT=3333 \
+    LISTEN_ADDR=0.0.0.0 \
+    EGRESS=0 \
+    DEBIAN_FRONTEND=noninteractive
+
+# Base OS setup
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+      ca-certificates curl gnupg; \
+    rm -rf /var/lib/apt/lists/*
+
+# ---- Package sets (assembled by PRESET) ----
+# Core across all presets
+ENV PKGS_CORE="\
+  bash coreutils findutils grep sed gawk procps psmisc \
+  zip unzip tar gzip xz-utils p7zip-full zstd brotli \
+  ripgrep fd-find jq yq xmlstarlet jo miller python3-csvkit bat \
+  moreutils parallel \
+  file tree \
+  httpie \
+  bind9-dnsutils iputils-ping traceroute netcat-openbsd socat \
+  openssh-client rsync \
+  locales \
+  make cmake pkg-config build-essential \
+  git git-lfs \
+  openssl gpg \
+  poppler-utils pandoc \
+  python3 python3-pip python3-venv python3-distutils \
+  sqlite3"
+
+# Standard extras
+ENV PKGS_STANDARD_EXTRA="\
+  libreoffice \
+  imagemagick \
+  ffmpeg \
+  tesseract-ocr tesseract-ocr-eng \
+  ocrmypdf qpdf pdfgrep ghostscript \
+  fonts-noto fonts-noto-cjk fonts-noto-color-emoji \
+  libimage-exiftool-perl \
+  nodejs"
+
+# Full extras (TeX subset; sizable)
+ENV PKGS_FULL_EXTRA="\
+  texlive-xetex"
+
+# Node 22.x LTS (only if standard/full chosen)
+RUN set -eux; \
+    if [ "$PRESET" != "light" ]; then \
+      curl -fsSL https://deb.nodesource.com/setup_22.x | bash -; \
+      apt-get update; \
+    fi
+
+# Optional extra OCR languages (space-separated apt package names)
+ARG TESS_LANGS_EXTRA=""
+
+# Install packages based on PRESET (with preset-aware OCR defaults)
+RUN set -eux; \
+    apt-get update; \
+    case "$PRESET" in \
+      light)  tess_extra="${TESS_LANGS_EXTRA:-}";; \
+      standard) tess_extra="${TESS_LANGS_EXTRA:-"tesseract-ocr-fra tesseract-ocr-deu tesseract-ocr-spa tesseract-ocr-ita tesseract-ocr-por"}";; \
+      full)     tess_extra="${TESS_LANGS_EXTRA:-"tesseract-ocr-fra tesseract-ocr-deu tesseract-ocr-spa tesseract-ocr-ita tesseract-ocr-por tesseract-ocr-nld tesseract-ocr-swe tesseract-ocr-dan tesseract-ocr-nor tesseract-ocr-pol tesseract-ocr-ces tesseract-ocr-rus tesseract-ocr-chi-sim tesseract-ocr-chi-tra tesseract-ocr-jpn tesseract-ocr-kor"}";; \
+      *)        echo "Unknown PRESET=$PRESET"; exit 1 ;; \
+    esac; \
+    case "$PRESET" in \
+      light)  apt-get install -y --no-install-recommends $PKGS_CORE ;; \
+      standard) apt-get install -y --no-install-recommends $PKGS_CORE $PKGS_STANDARD_EXTRA $tess_extra ;; \
+      full)     apt-get install -y --no-install-recommends $PKGS_CORE $PKGS_STANDARD_EXTRA $PKGS_FULL_EXTRA $tess_extra ;; \
+    esac; \
+    apt-get autoremove -y; \
+    rm -rf /var/lib/apt/lists/*
+
+# ----- Locales (always English; optional extras) -----
+# EXTRA_LOCALES: space-separated list like "fr_CA.UTF-8 de_DE.UTF-8"
+ARG EXTRA_LOCALES=""
+
+RUN set -eux; \
+    extras="$EXTRA_LOCALES"; \
+    if [ -z "$extras" ]; then \
+      case "$PRESET" in \
+        light)  extras="";; \
+        standard) extras="en_GB.UTF-8 en_CA.UTF-8 fr_CA.UTF-8 de_DE.UTF-8 es_ES.UTF-8 it_IT.UTF-8 pt_BR.UTF-8";; \
+        full)     extras="en_GB.UTF-8 en_CA.UTF-8 fr_CA.UTF-8 de_DE.UTF-8 es_ES.UTF-8 it_IT.UTF-8 pt_BR.UTF-8 nl_NL.UTF-8 sv_SE.UTF-8 da_DK.UTF-8 nb_NO.UTF-8 pl_PL.UTF-8 cs_CZ.UTF-8 ru_RU.UTF-8 zh_CN.UTF-8 zh_TW.UTF-8 ja_JP.UTF-8 ko_KR.UTF-8";; \
+        *)        echo "Unknown PRESET=$PRESET"; exit 1;; \
+      esac; \
+    fi; \
+    sed -i 's/^# \?\(en_US\.UTF-8\)/\1/' /etc/locale.gen; \
+    for loc in $extras; do \
+      esc="$(printf '%s\n' "$loc" | sed 's/[.[\*^$]/\\&/g')"; \
+      if ! grep -q "^$esc" /etc/locale.gen; then echo "$loc UTF-8" >> /etc/locale.gen; fi; \
+      sed -i "s/^# \?$esc/$esc/" /etc/locale.gen; \
+    done; \
+    locale-gen
+
+ENV LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+
+ARG DUCKDB_VERSION=1.3.2
+ARG TARGETARCH
+
+RUN set -eux; \
+  case "$TARGETARCH" in \
+    amd64) duck_arch='linux-amd64' ;; \
+    arm64) duck_arch='linux-arm64' ;; \
+    *) echo "Unsupported arch: $TARGETARCH" >&2; exit 1 ;; \
+  esac; \
+  curl -fsSL -o /tmp/duckdb_cli.zip \
+    "https://github.com/duckdb/duckdb/releases/download/v${DUCKDB_VERSION}/duckdb_cli-${duck_arch}.zip"; \
+  unzip -q /tmp/duckdb_cli.zip -d /usr/local/bin; \
+  chmod +x /usr/local/bin/duckdb; \
+  rm -f /tmp/duckdb_cli.zip
+
+# Python QoL libs in an isolated venv (PEP 668 friendly)
+RUN set -eux; \
+    python3 -m venv /opt/venv; \
+    /opt/venv/bin/python -m pip install --no-cache-dir --upgrade pip setuptools wheel; \
+    /opt/venv/bin/pip install --no-cache-dir \
+        requests beautifulsoup4 lxml \
+        numpy pandas pyarrow duckdb \
+        openpyxl python-docx python-pptx \
+        pypdf2 pdfminer.six \
+        jinja2 tqdm
+
+ENV PATH="/opt/venv/bin:${PATH}"
+
+# Alias debian specific names
+RUN set -eux; \
+    ln -sf /usr/bin/batcat /usr/local/bin/bat; \
+    ln -sf /usr/bin/fdfind /usr/local/bin/fd
+
+# Create non-root user and dirs
+RUN set -eux; \
+    groupadd -g "$APP_GID" "$APP_USER"; \
+    useradd -m -u "$APP_UID" -g "$APP_GID" -s /bin/bash "$APP_USER"; \
+    mkdir -p "$WORKSPACE" "$LOG_DIR" /app; \
+    chown -R "$APP_UID:$APP_GID" "$WORKSPACE" "$LOG_DIR" /app
+
+USER $APP_USER
+WORKDIR $WORKSPACE
+
+ENV MCP_LOG_DIR=${LOG_DIR}
+EXPOSE ${PORT}
+
+CMD ["/bin/bash"]
