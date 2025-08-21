@@ -7,6 +7,8 @@ This repository contains `mcp-shell`, a Model Context Protocol (MCP) server writ
 - `internal/`: Go packages implementing each tool (e.g. `internal/shell` for `shell.exec`).
 - `doc/`: documentation such as the function catalogue.
 - `.github/workflows/`: CI configuration.
+- `scripts/`: helper scripts. Update `scripts/deps.txt` whenever new development
+  dependencies are required and keep `scripts/install-deps.sh` in sync.
 
 ## Development workflow
 - Use `go fmt ./...` for formatting.
