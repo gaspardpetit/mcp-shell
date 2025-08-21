@@ -51,7 +51,7 @@ RUN go build -trimpath -ldflags="-s -w" -o /out/mcp-server ./main.go
 FROM debian:bookworm-slim AS runtime
 
 # ---- Build-time knobs (choose your preset) ----
-# minimal  -> smallest, shell + core utils + python basics + poppler + pandoc
+# light  -> smallest, shell + core utils + python basics + poppler + pandoc
 # standard -> adds LibreOffice, ImageMagick, ffmpeg, tesseract, DuckDB, Node.js LTS
 # full     -> standard + TeX subset for high-quality PDF via pandoc/xelatex
 ARG PRESET=standard
@@ -111,7 +111,7 @@ ENV PKGS_FULL_EXTRA="\
 
   # Node 22.x LTS (only if standard/full chosen)
 RUN set -eux; \
-    if [ "$PRESET" != "minimal" ]; then \
+    if [ "$PRESET" != "light" ]; then \
       curl -fsSL https://deb.nodesource.com/setup_22.x | bash -; \
       apt-get update; \
     fi
@@ -123,13 +123,13 @@ ARG TESS_LANGS_EXTRA=""
 RUN set -eux; \
     apt-get update; \
     case "$PRESET" in \
-      minimal)  tess_extra="${TESS_LANGS_EXTRA:-}";; \
+      light)  tess_extra="${TESS_LANGS_EXTRA:-}";; \
       standard) tess_extra="${TESS_LANGS_EXTRA:-"tesseract-ocr-fra tesseract-ocr-deu tesseract-ocr-spa tesseract-ocr-ita tesseract-ocr-por"}";; \
       full)     tess_extra="${TESS_LANGS_EXTRA:-"tesseract-ocr-fra tesseract-ocr-deu tesseract-ocr-spa tesseract-ocr-ita tesseract-ocr-por tesseract-ocr-nld tesseract-ocr-swe tesseract-ocr-dan tesseract-ocr-nor tesseract-ocr-pol tesseract-ocr-ces tesseract-ocr-rus tesseract-ocr-chi-sim tesseract-ocr-chi-tra tesseract-ocr-jpn tesseract-ocr-kor"}";; \
       *)        echo "Unknown PRESET=$PRESET"; exit 1 ;; \
     esac; \
     case "$PRESET" in \
-      minimal)  apt-get install -y --no-install-recommends $PKGS_CORE ;; \
+      light)  apt-get install -y --no-install-recommends $PKGS_CORE ;; \
       standard) apt-get install -y --no-install-recommends $PKGS_CORE $PKGS_STANDARD_EXTRA $tess_extra ;; \
       full)     apt-get install -y --no-install-recommends $PKGS_CORE $PKGS_STANDARD_EXTRA $PKGS_FULL_EXTRA $tess_extra ;; \
     esac; \
@@ -146,7 +146,7 @@ RUN set -eux; \
     extras="$EXTRA_LOCALES"; \
     if [ -z "$extras" ]; then \
       case "$PRESET" in \
-        minimal)  extras="";; \
+        light)  extras="";; \
         standard) extras="en_GB.UTF-8 en_CA.UTF-8 fr_CA.UTF-8 de_DE.UTF-8 es_ES.UTF-8 it_IT.UTF-8 pt_BR.UTF-8";; \
         full)     extras="en_GB.UTF-8 en_CA.UTF-8 fr_CA.UTF-8 de_DE.UTF-8 es_ES.UTF-8 it_IT.UTF-8 pt_BR.UTF-8 nl_NL.UTF-8 sv_SE.UTF-8 da_DK.UTF-8 nb_NO.UTF-8 pl_PL.UTF-8 cs_CZ.UTF-8 ru_RU.UTF-8 zh_CN.UTF-8 zh_TW.UTF-8 ja_JP.UTF-8 ko_KR.UTF-8";; \
         *)        echo "Unknown PRESET=$PRESET"; exit 1;; \
