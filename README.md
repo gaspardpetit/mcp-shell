@@ -21,29 +21,42 @@
 
 ## Build
 
-Choose one of three presets; optional language packs and locales are parameterized.
+Tool layers are prebuilt and published with a `tools-` tag prefix. The main
+Dockerfile simply adds the compiled server on top of one of these layers:
 
 ```bash
-# Minimal (smallest: shell + core utils + python basics + poppler + pandoc)
-docker build -t mcp-shell:mini --build-arg PRESET=minimal .
+# Standard image using the latest tool layer
+docker build -t mcp-shell:std \
+  --build-arg BASE_IMAGE=ghcr.io/<owner>/mcp-shell:tools-std-latest .
 
-# Standard (recommended: adds LibreOffice, ImageMagick, ffmpeg, Tesseract, DuckDB, Node.js LTS)
-docker build -t mcp-shell:std  --build-arg PRESET=standard .
+# Light image
+docker build -t mcp-shell:mini \
+  --build-arg BASE_IMAGE=ghcr.io/<owner>/mcp-shell:tools-light-latest .
 
-# Full (adds TeX subset for high-quality PDF output; larger image)
-docker build -t mcp-shell:full --build-arg PRESET=full .
+# Full image
+docker build -t mcp-shell:full \
+  --build-arg BASE_IMAGE=ghcr.io/<owner>/mcp-shell:tools-full-latest .
 ```
 
-Optional (only meaningful for `standard`/`full`):
+To rebuild the underlying tool layer itself (usually only needed when the
+tooling changes), use `Dockerfile.tools`:
+
+```bash
+docker build -f Dockerfile.tools -t ghcr.io/<owner>/mcp-shell:tools-std \
+  --build-arg PRESET=standard .
+```
+
+Optional OCR languages or locales (meaningful for `standard`/`full`) apply when
+building the tool layer:
 
 ```bash
 # Extra OCR languages (English `eng` is always installed)
-docker build -t mcp-shell:std \
+docker build -f Dockerfile.tools -t ghcr.io/<owner>/mcp-shell:tools-std \
   --build-arg PRESET=standard \
   --build-arg TESS_LANGS_EXTRA="tesseract-ocr-fra tesseract-ocr-deu" .
 
 # Extra locales (English en_US.UTF-8 is always enabled)
-docker build -t mcp-shell:std \
+docker build -f Dockerfile.tools -t ghcr.io/<owner>/mcp-shell:tools-std \
   --build-arg PRESET=standard \
   --build-arg EXTRA_LOCALES="fr_CA.UTF-8 de_DE.UTF-8" .
 ```
