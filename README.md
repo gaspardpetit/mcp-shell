@@ -10,7 +10,7 @@
 ## Overview
 
 - **Purpose**: Let an LLM run commands, inspect/transform files, process documents (Word/Excel/PowerPoint/PDF), and use common CLIs (Python, Node.js, Git, jq/yq, ripgrep, ImageMagick, ffmpeg, Tesseract, Pandoc, Poppler, DuckDB CLI, etc.).
-- **Primary tools**: `shell.exec`, `python.run`, `node.run`, `sh.script.write_and_run`, `fs.*` (list, stat, read, write, search, hash, etc.), `archive.*`, text utilities like `text.diff` and `text.apply_patch`, and document helpers such as `doc.convert`, `pdf.extract_text`, `spreadsheet.to_csv`, and `doc.metadata`.
+- **Primary tools**: `shell.exec`, `python.run`, `node.run`, `sh.script.write_and_run`, package managers (`apt.install`, `pip.install`, `npm.install`), `fs.*` (list, stat, read, write, search, hash, etc.), `archive.*`, text utilities like `text.diff` and `text.apply_patch`, and document helpers such as `doc.convert`, `pdf.extract_text`, `spreadsheet.to_csv`, and `doc.metadata`.
 - **Dependencies**: `fs.search` relies on the `rg` binary (ripgrep); install it to enable content search.
   Development dependencies are listed in `scripts/deps.txt` and can be installed via `scripts/install-deps.sh`.
 - **Function reference**: see [doc/functions.md](doc/functions.md) for supported functions.
@@ -93,6 +93,7 @@ docker run --rm -d --name mcp-shell \
 Notes:
 - Mount something into `/workspace` if you want `shell.exec` to `ls` real files.
 - `EGRESS=1` just sets intent for your server/tools; actual network policy is up to how you run Docker.
+- Package managers (`apt.install`, `pip.install`, `npm.install`) are disabled unless `EGRESS=1` or the server is started with `--allow-pkg`.
 
 ### B) Air-gapped mode (STDIO)
 

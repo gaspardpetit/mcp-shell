@@ -17,6 +17,7 @@ import (
 	"github.com/gaspardpetit/mcp-shell/internal/archive"
 	"github.com/gaspardpetit/mcp-shell/internal/doc"
 	"github.com/gaspardpetit/mcp-shell/internal/fs"
+	"github.com/gaspardpetit/mcp-shell/internal/pkgmgr"
 	rt "github.com/gaspardpetit/mcp-shell/internal/runtime"
 	"github.com/gaspardpetit/mcp-shell/internal/shell"
 	"github.com/gaspardpetit/mcp-shell/internal/text"
@@ -34,7 +35,10 @@ func main() {
 	addr := flag.String("addr", ":3333", "Listen address for HTTP/SSE transports")
 	basePath := flag.String("base-path", "/mcp", "Base path for HTTP/SSE endpoints")
 	baseURL := flag.String("base-url", "", "Public base URL (SSE only, optional)")
+	allowPkg := flag.Bool("allow-pkg", false, "Allow package installation tools even when EGRESS=0")
 	flag.Parse()
+
+	pkgmgr.AdminOverride = *allowPkg
 
 	// ---- server
 	s := server.NewMCPServer(
@@ -92,6 +96,40 @@ func main() {
 		return mcp.NewToolResultStructured(resp, "sh.script.write_and_run result"), nil
 	})
 	s.AddTool(shTool, shHandler)
+
+	// package management tools
+	aptTool := mcp.NewTool(
+		"apt.install",
+		mcp.WithDescription("Install system packages via apt"),
+		mcp.WithInputSchema[pkgmgr.AptInstallRequest](),
+	)
+	aptHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args pkgmgr.AptInstallRequest) (*mcp.CallToolResult, error) {
+		resp := pkgmgr.AptInstall(ctx, args)
+		return mcp.NewToolResultStructured(resp, "apt.install result"), nil
+	})
+	s.AddTool(aptTool, aptHandler)
+
+	pipTool := mcp.NewTool(
+		"pip.install",
+		mcp.WithDescription("Install Python packages via pip"),
+		mcp.WithInputSchema[pkgmgr.PipInstallRequest](),
+	)
+	pipHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args pkgmgr.PipInstallRequest) (*mcp.CallToolResult, error) {
+		resp := pkgmgr.PipInstall(ctx, args)
+		return mcp.NewToolResultStructured(resp, "pip.install result"), nil
+	})
+	s.AddTool(pipTool, pipHandler)
+
+	npmTool := mcp.NewTool(
+		"npm.install",
+		mcp.WithDescription("Install Node packages via npm"),
+		mcp.WithInputSchema[pkgmgr.NpmInstallRequest](),
+	)
+	npmHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args pkgmgr.NpmInstallRequest) (*mcp.CallToolResult, error) {
+		resp := pkgmgr.NpmInstall(ctx, args)
+		return mcp.NewToolResultStructured(resp, "npm.install result"), nil
+	})
+	s.AddTool(npmTool, npmHandler)
 
 	// filesystem tools
 	// fs.list
