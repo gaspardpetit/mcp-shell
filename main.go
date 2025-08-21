@@ -17,6 +17,7 @@ import (
 	"github.com/gaspardpetit/mcp-shell/internal/archive"
 	"github.com/gaspardpetit/mcp-shell/internal/doc"
 	"github.com/gaspardpetit/mcp-shell/internal/fs"
+	"github.com/gaspardpetit/mcp-shell/internal/git"
 	"github.com/gaspardpetit/mcp-shell/internal/pkgmgr"
 	rt "github.com/gaspardpetit/mcp-shell/internal/runtime"
 	"github.com/gaspardpetit/mcp-shell/internal/shell"
@@ -383,6 +384,106 @@ func main() {
 		return mcp.NewToolResultStructured(resp, "doc.metadata result"), nil
 	})
 	s.AddTool(docMetaTool, docMetaHandler)
+
+	// git.clone
+	cloneTool := mcp.NewTool(
+		"git.clone",
+		mcp.WithDescription("Clone a git repository"),
+		mcp.WithInputSchema[git.CloneRequest](),
+	)
+	cloneHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args git.CloneRequest) (*mcp.CallToolResult, error) {
+		resp := git.Clone(ctx, args)
+		return mcp.NewToolResultStructured(resp, "git.clone result"), nil
+	})
+	s.AddTool(cloneTool, cloneHandler)
+
+	statusTool := mcp.NewTool(
+		"git.status",
+		mcp.WithDescription("Get git status"),
+		mcp.WithInputSchema[git.StatusRequest](),
+	)
+	statusHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args git.StatusRequest) (*mcp.CallToolResult, error) {
+		resp := git.Status(ctx, args)
+		return mcp.NewToolResultStructured(resp, "git.status result"), nil
+	})
+	s.AddTool(statusTool, statusHandler)
+
+	commitTool := mcp.NewTool(
+		"git.commit",
+		mcp.WithDescription("Commit changes in a git repository"),
+		mcp.WithInputSchema[git.CommitRequest](),
+	)
+	commitHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args git.CommitRequest) (*mcp.CallToolResult, error) {
+		resp := git.Commit(ctx, args)
+		return mcp.NewToolResultStructured(resp, "git.commit result"), nil
+	})
+	s.AddTool(commitTool, commitHandler)
+
+	pullTool := mcp.NewTool(
+		"git.pull",
+		mcp.WithDescription("Pull latest changes"),
+		mcp.WithInputSchema[git.PullRequest](),
+	)
+	pullHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args git.PullRequest) (*mcp.CallToolResult, error) {
+		resp := git.Pull(ctx, args)
+		return mcp.NewToolResultStructured(resp, "git.pull result"), nil
+	})
+	s.AddTool(pullTool, pullHandler)
+
+	pushTool := mcp.NewTool(
+		"git.push",
+		mcp.WithDescription("Push commits to remote"),
+		mcp.WithInputSchema[git.PushRequest](),
+	)
+	pushHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args git.PushRequest) (*mcp.CallToolResult, error) {
+		resp := git.Push(ctx, args)
+		return mcp.NewToolResultStructured(resp, "git.push result"), nil
+	})
+	s.AddTool(pushTool, pushHandler)
+
+	checkoutTool := mcp.NewTool(
+		"git.checkout",
+		mcp.WithDescription("Checkout a git ref"),
+		mcp.WithInputSchema[git.CheckoutRequest](),
+	)
+	checkoutHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args git.CheckoutRequest) (*mcp.CallToolResult, error) {
+		resp := git.Checkout(ctx, args)
+		return mcp.NewToolResultStructured(resp, "git.checkout result"), nil
+	})
+	s.AddTool(checkoutTool, checkoutHandler)
+
+	branchTool := mcp.NewTool(
+		"git.branch",
+		mcp.WithDescription("Manage git branches"),
+		mcp.WithInputSchema[git.BranchRequest](),
+	)
+	branchHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args git.BranchRequest) (*mcp.CallToolResult, error) {
+		resp := git.Branch(ctx, args)
+		return mcp.NewToolResultStructured(resp, "git.branch result"), nil
+	})
+	s.AddTool(branchTool, branchHandler)
+
+	tagTool := mcp.NewTool(
+		"git.tag",
+		mcp.WithDescription("Manage git tags"),
+		mcp.WithInputSchema[git.TagRequest](),
+	)
+	tagHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args git.TagRequest) (*mcp.CallToolResult, error) {
+		resp := git.Tag(ctx, args)
+		return mcp.NewToolResultStructured(resp, "git.tag result"), nil
+	})
+	s.AddTool(tagTool, tagHandler)
+
+	lfsTool := mcp.NewTool(
+		"git.lfs.install",
+		mcp.WithDescription("Install Git LFS in a repository"),
+		mcp.WithInputSchema[git.LFSInstallRequest](),
+	)
+	lfsHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args git.LFSInstallRequest) (*mcp.CallToolResult, error) {
+		resp := git.LFSInstall(ctx, args)
+		return mcp.NewToolResultStructured(resp, "git.lfs.install result"), nil
+	})
+	s.AddTool(lfsTool, lfsHandler)
 
 	// ---- context & signals
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

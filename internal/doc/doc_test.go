@@ -13,12 +13,21 @@ import (
 
 func TestConvertAndMetadataAndExtract(t *testing.T) {
 	ctx := context.Background()
+	if _, err := exec.LookPath("pandoc"); err != nil {
+		t.Skip("pandoc not available", err)
+	}
+	if _, err := exec.LookPath("libreoffice"); err != nil {
+		t.Skip("libreoffice not available", err)
+	}
+	if _, err := exec.LookPath("pdftotext"); err != nil {
+		t.Skip("pdftotext not available", err)
+	}
 	dir := t.TempDir()
 	docx := filepath.Join(dir, "sample.docx")
 	cmd := exec.Command("pandoc", "-o", docx)
 	cmd.Stdin = strings.NewReader("Hello world\n")
 	if err := cmd.Run(); err != nil {
-		t.Skip("pandoc not available", err)
+		t.Fatalf("pandoc failed: %v", err)
 	}
 	pdfResp := Convert(ctx, ConvertRequest{SrcPath: docx, DestFormat: "pdf"})
 	if pdfResp.Error != "" {

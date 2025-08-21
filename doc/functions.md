@@ -35,3 +35,12 @@ List of functions exposed by `mcp-shell`.
 | `pdf.extract_text` | `path`, `layout?` (`raw`\|`layout`\|`html`), `max_bytes?` | `{text,truncated,duration_ms,error?}` | Extract text from a PDF |
 | `spreadsheet.to_csv` | `path`, `sheet?` (name or index), `max_bytes?` | `{csv,truncated,duration_ms,error?}` | Convert a spreadsheet sheet to CSV |
 | `doc.metadata` | `path` | `{mime,pages?,words?,created?,modified?,duration_ms,error?}` | Retrieve document metadata |
+| `git.clone` | `repo` (string, required), `dir?`, `depth?`, `timeout_ms?`, `max_bytes?`, `dry_run?` | `{stdout, stderr, exit_code, duration_ms, stdout_truncated, stderr_truncated, error?}` | Clone a git repository |
+| `git.status` | `path` (string, required), `timeout_ms?`, `max_bytes?` | `{stdout, stderr, exit_code, duration_ms, stdout_truncated, stderr_truncated, error?}` | Git status (porcelain) |
+| `git.commit` | `path` (string, required), `message` (string, required), `all?`, `timeout_ms?`, `max_bytes?`, `dry_run?` | `{stdout, stderr, exit_code, duration_ms, stdout_truncated, stderr_truncated, commit?, error?}` | Commit changes |
+| `git.pull` | `path` (string, required), `rebase?`, `timeout_ms?`, `max_bytes?`, `dry_run?` | `{stdout, stderr, exit_code, duration_ms, stdout_truncated, stderr_truncated, error?}` | Pull latest changes |
+| `git.push` | `path` (string, required), `remote?`, `branch?`, `timeout_ms?`, `max_bytes?`, `dry_run?` | `{stdout, stderr, exit_code, duration_ms, stdout_truncated, stderr_truncated, error?}` | Push commits (requires `GIT_ALLOW_PUSH=1`) |
+| `git.checkout` | `path` (string, required), `ref` (string, required), `create?`, `timeout_ms?`, `max_bytes?` | `{stdout, stderr, exit_code, duration_ms, stdout_truncated, stderr_truncated, error?}` | Checkout a git ref |
+| `git.branch` | `path` (string, required), `name?`, `delete?`, `list?`, `timeout_ms?`, `max_bytes?` | `{stdout, stderr, exit_code, duration_ms, stdout_truncated, stderr_truncated, branches?, error?}` | Manage branches |
+| `git.tag` | `path` (string, required), `name?`, `delete?`, `list?`, `timeout_ms?`, `max_bytes?` | `{stdout, stderr, exit_code, duration_ms, stdout_truncated, stderr_truncated, tags?, error?}` | Manage tags |
+| `git.lfs.install` | `path` (string, required), `timeout_ms?`, `max_bytes?`, `dry_run?` | `{stdout, stderr, exit_code, duration_ms, stdout_truncated, stderr_truncated, error?}` | Install Git LFS in a repository |
