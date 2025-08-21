@@ -44,3 +44,5 @@ List of functions exposed by `mcp-shell`.
 | `git.branch` | `path` (string, required), `name?`, `delete?`, `list?`, `timeout_ms?`, `max_bytes?` | `{stdout, stderr, exit_code, duration_ms, stdout_truncated, stderr_truncated, branches?, error?}` | Manage branches |
 | `git.tag` | `path` (string, required), `name?`, `delete?`, `list?`, `timeout_ms?`, `max_bytes?` | `{stdout, stderr, exit_code, duration_ms, stdout_truncated, stderr_truncated, tags?, error?}` | Manage tags |
 | `git.lfs.install` | `path` (string, required), `timeout_ms?`, `max_bytes?`, `dry_run?` | `{stdout, stderr, exit_code, duration_ms, stdout_truncated, stderr_truncated, error?}` | Install Git LFS in a repository |
+| `http.request` | `method` (string), `url` (string), `headers?`, `body?`, `body_b64?`, `timeout_ms?`, `max_bytes?`, `allow_insecure_tls?` | `{status, headers, body?, body_b64?, truncated, duration_ms, error?}` | Perform an HTTP request |
+| `web.download` | `url` (string), `dest_path` (string), `expected_sha256?`, `timeout_ms?`, `allow_insecure_tls?` | `{path, size, sha256, duration_ms, error?}` | Download a file from the web |
