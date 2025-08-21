@@ -22,6 +22,7 @@ import (
 	rt "github.com/gaspardpetit/mcp-shell/internal/runtime"
 	"github.com/gaspardpetit/mcp-shell/internal/shell"
 	"github.com/gaspardpetit/mcp-shell/internal/text"
+	"github.com/gaspardpetit/mcp-shell/internal/web"
 )
 
 var (
@@ -484,6 +485,30 @@ func main() {
 		return mcp.NewToolResultStructured(resp, "git.lfs.install result"), nil
 	})
 	s.AddTool(lfsTool, lfsHandler)
+
+	// http.request
+	httpTool := mcp.NewTool(
+		"http.request",
+		mcp.WithDescription("Perform an HTTP request"),
+		mcp.WithInputSchema[web.HTTPRequest](),
+	)
+	httpHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args web.HTTPRequest) (*mcp.CallToolResult, error) {
+		resp := web.HTTPRequestTool(ctx, args)
+		return mcp.NewToolResultStructured(resp, "http.request result"), nil
+	})
+	s.AddTool(httpTool, httpHandler)
+
+	// web.download
+	dlTool := mcp.NewTool(
+		"web.download",
+		mcp.WithDescription("Download a file from the web"),
+		mcp.WithInputSchema[web.DownloadRequest](),
+	)
+	dlHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args web.DownloadRequest) (*mcp.CallToolResult, error) {
+		resp := web.Download(ctx, args)
+		return mcp.NewToolResultStructured(resp, "web.download result"), nil
+	})
+	s.AddTool(dlTool, dlHandler)
 
 	// ---- context & signals
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
