@@ -91,3 +91,24 @@ func TestReadBinaryFails(t *testing.T) {
 		t.Fatalf("expected utf-8 error")
 	}
 }
+
+func TestSearch(t *testing.T) {
+	ctx := context.Background()
+	ws := t.TempDir()
+	t.Setenv("WORKSPACE", ws)
+	if err := os.WriteFile(filepath.Join(ws, "a.txt"), []byte("hello"), 0o644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(ws, "b.md"), []byte("hello world"), 0o644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	cs := false
+	resp := Search(ctx, SearchRequest{Path: ws, Query: "hello", CaseSensitive: &cs})
+	if resp.Error != "" || len(resp.Matches) != 2 {
+		t.Fatalf("search got %+v", resp)
+	}
+	resp = Search(ctx, SearchRequest{Path: ws, Query: "h.*o", Regex: true, Glob: "*.txt"})
+	if resp.Error != "" || len(resp.Matches) != 1 {
+		t.Fatalf("search regex/glob got %+v", resp)
+	}
+}

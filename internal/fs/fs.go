@@ -1,6 +1,8 @@
 package fs
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -9,6 +11,7 @@ import (
 	"io"
 	stdfs "io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -641,4 +644,118 @@ func copyFile(src, dest string, mode os.FileMode) error {
 		return err
 	}
 	return nil
+}
+
+// ---- fs.search
+
+type SearchRequest struct {
+	Path          string `json:"path"`
+	Query         string `json:"query"`
+	Regex         bool   `json:"regex,omitempty"`
+	Glob          string `json:"glob,omitempty"`
+	CaseSensitive *bool  `json:"case_sensitive,omitempty"`
+	MaxResults    int    `json:"max_results,omitempty"`
+}
+
+type SearchMatch struct {
+	File       string `json:"file"`
+	Line       int    `json:"line"`
+	ByteOffset int    `json:"byte_offset"`
+	Preview    string `json:"preview"`
+}
+
+type SearchResponse struct {
+	Matches    []SearchMatch `json:"matches"`
+	DurationMs int64         `json:"duration_ms"`
+	Error      string        `json:"error,omitempty"`
+}
+
+func Search(ctx context.Context, in SearchRequest) SearchResponse {
+	start := time.Now()
+	if in.Query == "" {
+		return SearchResponse{DurationMs: time.Since(start).Milliseconds(), Error: "query is required"}
+	}
+	path, err := normalizePath(in.Path)
+	if err != nil {
+		return SearchResponse{DurationMs: time.Since(start).Milliseconds(), Error: err.Error()}
+	}
+	args := []string{"--json"}
+	if !in.Regex {
+		args = append(args, "--fixed-strings")
+	}
+	if in.Glob != "" {
+		args = append(args, "--glob", in.Glob)
+	}
+	if in.CaseSensitive != nil {
+		if *in.CaseSensitive {
+			args = append(args, "--case-sensitive")
+		} else {
+			args = append(args, "--ignore-case")
+		}
+	}
+	args = append(args, in.Query, path)
+	cmd := exec.CommandContext(ctx, "rg", args...)
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return SearchResponse{DurationMs: time.Since(start).Milliseconds(), Error: err.Error()}
+	}
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Start(); err != nil {
+		return SearchResponse{DurationMs: time.Since(start).Milliseconds(), Error: err.Error()}
+	}
+	scanner := bufio.NewScanner(stdout)
+	resp := SearchResponse{}
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		var evt struct {
+			Type string `json:"type"`
+			Data struct {
+				Path struct {
+					Text string `json:"text"`
+				} `json:"path"`
+				Lines struct {
+					Text string `json:"text"`
+				} `json:"lines"`
+				LineNumber     int `json:"line_number"`
+				AbsoluteOffset int `json:"absolute_offset"`
+			} `json:"data"`
+		}
+		if err := json.Unmarshal(line, &evt); err != nil {
+			continue
+		}
+		if evt.Type == "match" {
+			resp.Matches = append(resp.Matches, SearchMatch{
+				File:       evt.Data.Path.Text,
+				Line:       evt.Data.LineNumber,
+				ByteOffset: evt.Data.AbsoluteOffset,
+				Preview:    evt.Data.Lines.Text,
+			})
+			if in.MaxResults > 0 && len(resp.Matches) >= in.MaxResults {
+				_ = cmd.Process.Kill()
+				break
+			}
+		}
+	}
+	_ = cmd.Wait()
+	if err := scanner.Err(); err != nil {
+		resp.Error = err.Error()
+	}
+	resp.DurationMs = time.Since(start).Milliseconds()
+	audit(struct {
+		TS         string `json:"ts"`
+		Tool       string `json:"tool"`
+		Path       string `json:"path"`
+		Query      string `json:"query"`
+		DurationMs int64  `json:"duration_ms"`
+		Count      int    `json:"count"`
+	}{time.Now().UTC().Format(time.RFC3339), "fs.search", path, in.Query, resp.DurationMs, len(resp.Matches)})
+	if resp.Error == "" {
+		if exitErr, ok := cmd.ProcessState.Sys().(syscall.WaitStatus); ok {
+			if exitErr.ExitStatus() > 1 {
+				resp.Error = stderr.String()
+			}
+		}
+	}
+	return resp
 }

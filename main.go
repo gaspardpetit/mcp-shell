@@ -16,6 +16,7 @@ import (
 
 	"github.com/gaspardpetit/mcp-shell/internal/fs"
 	"github.com/gaspardpetit/mcp-shell/internal/shell"
+	"github.com/gaspardpetit/mcp-shell/internal/text"
 )
 
 var (
@@ -161,6 +162,42 @@ func main() {
 		return mcp.NewToolResultStructured(resp, "fs.copy result"), nil
 	})
 	s.AddTool(fsCopyTool, fsCopyHandler)
+
+	// fs.search
+	fsSearchTool := mcp.NewTool(
+		"fs.search",
+		mcp.WithDescription("Search for text in files"),
+		mcp.WithInputSchema[fs.SearchRequest](),
+	)
+	fsSearchHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args fs.SearchRequest) (*mcp.CallToolResult, error) {
+		resp := fs.Search(ctx, args)
+		return mcp.NewToolResultStructured(resp, "fs.search result"), nil
+	})
+	s.AddTool(fsSearchTool, fsSearchHandler)
+
+	// text.diff
+	textDiffTool := mcp.NewTool(
+		"text.diff",
+		mcp.WithDescription("Compute a unified diff between two strings"),
+		mcp.WithInputSchema[text.DiffRequest](),
+	)
+	textDiffHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args text.DiffRequest) (*mcp.CallToolResult, error) {
+		resp := text.Diff(ctx, args)
+		return mcp.NewToolResultStructured(resp, "text.diff result"), nil
+	})
+	s.AddTool(textDiffTool, textDiffHandler)
+
+	// text.apply_patch
+	textPatchTool := mcp.NewTool(
+		"text.apply_patch",
+		mcp.WithDescription("Apply a unified diff patch to a file"),
+		mcp.WithInputSchema[text.ApplyPatchRequest](),
+	)
+	textPatchHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args text.ApplyPatchRequest) (*mcp.CallToolResult, error) {
+		resp := text.ApplyPatch(ctx, args)
+		return mcp.NewToolResultStructured(resp, "text.apply_patch result"), nil
+	})
+	s.AddTool(textPatchTool, textPatchHandler)
 
 	// ---- context & signals
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
