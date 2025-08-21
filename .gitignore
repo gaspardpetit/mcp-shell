@@ -1,0 +1,19 @@
+# Binaries
+mcp-server
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go coverage files
+*.cover
+*.coverprofile
+
+# Logs
+*.log
+
+# Build directories
+bin/
