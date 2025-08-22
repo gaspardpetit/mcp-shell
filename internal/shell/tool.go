@@ -10,6 +10,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -21,6 +23,57 @@ const (
 	DefaultMaxStdin = 1 << 20 // 1 MiB stdin cap
 	LogPath         = "/logs/mcp-shell.log"
 )
+
+var (
+	denyPatterns  []*regexp.Regexp
+	allowPatterns []*regexp.Regexp
+)
+
+func init() {
+	if v := os.Getenv("SHELL_EXEC_DENY"); v != "" {
+		for _, p := range strings.Split(v, ",") {
+			p = strings.TrimSpace(p)
+			if p == "" {
+				continue
+			}
+			if re, err := regexp.Compile(p); err == nil {
+				denyPatterns = append(denyPatterns, re)
+			}
+		}
+	}
+	if v := os.Getenv("SHELL_EXEC_ALLOW"); v != "" {
+		for _, p := range strings.Split(v, ",") {
+			p = strings.TrimSpace(p)
+			if p == "" {
+				continue
+			}
+			if re, err := regexp.Compile(p); err == nil {
+				allowPatterns = append(allowPatterns, re)
+			}
+		}
+	}
+}
+
+func allowed(cmd string) bool {
+	if len(allowPatterns) > 0 {
+		ok := false
+		for _, re := range allowPatterns {
+			if re.MatchString(cmd) {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			return false
+		}
+	}
+	for _, re := range denyPatterns {
+		if re.MatchString(cmd) {
+			return false
+		}
+	}
+	return true
+}
 
 type ExecRequest struct {
 	Cmd       string            `json:"cmd"` // required
@@ -58,6 +111,16 @@ func Run(ctx context.Context, in ExecRequest) ExecResponse {
 	stdinCap := DefaultMaxStdin
 
 	start := time.Now()
+	if !allowed(in.Cmd) {
+		resp := ExecResponse{
+			Stderr:     "command blocked by policy",
+			ExitCode:   126,
+			DurationMs: time.Since(start).Milliseconds(),
+			Error:      "command blocked",
+		}
+		_ = audit(in, resp, "")
+		return resp
+	}
 	if in.DryRun {
 		resp := ExecResponse{
 			Stdout:     "[dry_run] would execute: " + in.Cmd,

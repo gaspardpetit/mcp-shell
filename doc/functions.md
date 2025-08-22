@@ -7,6 +7,7 @@ List of functions exposed by `mcp-shell`.
 | `GET /healthz` | none | `{status:"ok", name, version, uptime}` | Basic liveness probe |
 | `GET /readyz` | none | `{status:"ok", name, version, uptime}` | Readiness probe |
 | `GET /mcp/health` | none | `{status:"ok", name, version, uptime}` | MCP-native health endpoint |
+| `GET /metrics` | none | Prometheus metrics | Prometheus metrics endpoint |
 | `shell.exec` | `cmd` (string, required), `cwd?`, `env?`, `timeout_ms?`, `stdin?`, `max_bytes?`, `dry_run?` | `{stdout, stderr, exit_code, duration_ms, stdout_truncated, stderr_truncated, error?}` | Execute a shell command in the container |
 | `python.run` | `code` (string, required), `args?`, `stdin?`, `venv?{name?,create_if_missing?}`, `packages?`, `timeout_ms?`, `max_bytes?` | `{stdout, stderr, exit_code, duration_ms, stdout_truncated, stderr_truncated, artifacts?, error?}` | Execute Python code, optionally in a virtual environment |
 | `node.run` | `code` (string, required), `args?`, `stdin?`, `packages?`, `timeout_ms?`, `max_bytes?` | `{stdout, stderr, exit_code, duration_ms, stdout_truncated, stderr_truncated, artifacts?, error?}` | Execute Node.js code |
