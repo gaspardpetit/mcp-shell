@@ -510,6 +510,30 @@ func main() {
 	})
 	s.AddTool(dlTool, dlHandler)
 
+	// web.search
+	searchTool := mcp.NewTool(
+		"web.search",
+		mcp.WithDescription("Search the web via SearxNG"),
+		mcp.WithInputSchema[web.SearchRequest](),
+	)
+	searchHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args web.SearchRequest) (*mcp.CallToolResult, error) {
+		resp := web.Search(ctx, args)
+		return mcp.NewToolResultStructured(resp, "web.search result"), nil
+	})
+	s.AddTool(searchTool, searchHandler)
+
+	// md.fetch
+	mdTool := mcp.NewTool(
+		"md.fetch",
+		mcp.WithDescription("Fetch a webpage and extract main content as Markdown"),
+		mcp.WithInputSchema[web.MDFetchRequest](),
+	)
+	mdHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args web.MDFetchRequest) (*mcp.CallToolResult, error) {
+		resp := web.FetchMarkdown(ctx, args)
+		return mcp.NewToolResultStructured(resp, "md.fetch result"), nil
+	})
+	s.AddTool(mdTool, mdHandler)
+
 	// ---- context & signals
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
