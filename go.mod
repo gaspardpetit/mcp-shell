@@ -4,6 +4,7 @@ go 1.24.6
 
 require (
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
+	github.com/creack/pty v1.1.21
 	github.com/go-shiori/go-readability v0.0.0-20250217085726-9f5bf5ca7612
 	github.com/mark3labs/mcp-go v0.38.0
 )
