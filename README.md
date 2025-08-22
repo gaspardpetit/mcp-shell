@@ -19,6 +19,7 @@
   - Network egress (enable/disable at run-time).
   - Resource limits (CPU, RAM, pids).
 - **Auditability**: Tool calls are JSONL-logged to `/logs/mcp-shell.log` (when `/logs` is mounted). Default caps: timeout 60s; 1 MiB per stream (stdout/stderr).
+- **Observability**: Prometheus metrics are exposed at `GET /metrics`.
 
 ---
 
@@ -94,6 +95,7 @@ Notes:
 - Mount something into `/workspace` if you want `shell.exec` to `ls` real files.
 - `EGRESS=1` just sets intent for your server/tools; actual network policy is up to how you run Docker.
 - Package managers (`apt.install`, `pip.install`, `npm.install`) are disabled unless `EGRESS=1` or the server is started with `--allow-pkg`.
+- `SHELL_EXEC_DENY` and `SHELL_EXEC_ALLOW` can configure block/allow patterns for `shell.exec`. Global concurrency is capped by `MAX_CONCURRENCY`; per-tool rate limits use `RATE_LIMIT_<TOOL>` environment variables (default 5 RPS).
 
 ### B) Air-gapped mode (STDIO)
 

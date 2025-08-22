@@ -19,6 +19,7 @@ import (
 	"github.com/gaspardpetit/mcp-shell/internal/fs"
 	"github.com/gaspardpetit/mcp-shell/internal/git"
 	"github.com/gaspardpetit/mcp-shell/internal/media"
+	"github.com/gaspardpetit/mcp-shell/internal/obs"
 	"github.com/gaspardpetit/mcp-shell/internal/pkgmgr"
 	"github.com/gaspardpetit/mcp-shell/internal/proc"
 	rt "github.com/gaspardpetit/mcp-shell/internal/runtime"
@@ -51,6 +52,7 @@ func main() {
 		server.WithToolCapabilities(true),
 		server.WithLogging(),
 		server.WithRecovery(),
+		server.WithToolHandlerMiddleware(obs.Middleware),
 	)
 
 	// tool definition
@@ -652,8 +654,9 @@ func main() {
 		mux.Handle(sse.CompleteSsePath(), sse.SSEHandler())
 		mux.Handle(sse.CompleteMessagePath(), sse.MessageHandler())
 
-		// Health endpoints
+		// Health and metrics endpoints
 		addHealthRoutes(mux, *basePath, "sse")
+		mux.Handle("/metrics", obs.MetricsHandler())
 
 		srv := &http.Server{
 			Addr:    *addr,
@@ -680,6 +683,7 @@ func main() {
 
 		// Built-in health lives at /mcp/health; we also expose /healthz
 		addHealthRoutes(mux, *basePath, "http")
+		mux.Handle("/metrics", obs.MetricsHandler())
 
 		srv := &http.Server{
 			Addr:    *addr,
