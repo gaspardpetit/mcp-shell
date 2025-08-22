@@ -48,3 +48,8 @@ List of functions exposed by `mcp-shell`.
 | `web.download` | `url` (string), `dest_path` (string), `expected_sha256?`, `timeout_ms?`, `allow_insecure_tls?` | `{path, size, sha256, duration_ms, error?}` | Download a file from the web |
 | `web.search` | `query` (string), `num_results?`, `engines?`, `safesearch?`, `time_range?`, `language?`, `timeout_ms?` | `{results:[{title,url,snippet,published?,source}],duration_ms,error?}` | Metasearch via SearxNG |
 | `md.fetch` | `url` (string), `timeout_ms?`, `max_bytes?`, `allow_insecure_tls?`, `render_js?`, `save_artifacts?` | `{title?,byline?,site_name?,published?,canonical_url?,markdown,truncated,artifacts?,duration_ms,error?}` | Fetch webpage and extract main content as Markdown |
+| `proc.spawn` | `cmd` (string, required), `args?`, `cwd?`, `env?`, `tty?` | `{pid, duration_ms, error?}` | Spawn a long-running process |
+| `proc.stdin` | `pid` (int, required), `data` (string, required) | `{bytes_written, duration_ms, error?}` | Write to stdin of a spawned process |
+| `proc.wait` | `pid` (int, required), `timeout_ms?` | `{exit_code, stdout?, stderr?, truncated, duration_ms, error?}` | Wait for a spawned process to exit |
+| `proc.kill` | `pid` (int, required), `signal?` (int) | `{killed, duration_ms, error?}` | Send a signal to a spawned process |
+| `proc.list` | none | `{processes:[{pid,cmdline,start_time,cwd}], duration_ms, error?}` | List spawned processes |

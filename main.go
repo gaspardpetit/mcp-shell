@@ -19,6 +19,7 @@ import (
 	"github.com/gaspardpetit/mcp-shell/internal/fs"
 	"github.com/gaspardpetit/mcp-shell/internal/git"
 	"github.com/gaspardpetit/mcp-shell/internal/pkgmgr"
+	"github.com/gaspardpetit/mcp-shell/internal/proc"
 	rt "github.com/gaspardpetit/mcp-shell/internal/runtime"
 	"github.com/gaspardpetit/mcp-shell/internal/shell"
 	"github.com/gaspardpetit/mcp-shell/internal/text"
@@ -533,6 +534,62 @@ func main() {
 		return mcp.NewToolResultStructured(resp, "md.fetch result"), nil
 	})
 	s.AddTool(mdTool, mdHandler)
+
+	// proc.spawn
+	spawnTool := mcp.NewTool(
+		"proc.spawn",
+		mcp.WithDescription("Spawn a long-running process"),
+		mcp.WithInputSchema[proc.SpawnRequest](),
+	)
+	spawnHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args proc.SpawnRequest) (*mcp.CallToolResult, error) {
+		resp := proc.Spawn(ctx, args)
+		return mcp.NewToolResultStructured(resp, "proc.spawn result"), nil
+	})
+	s.AddTool(spawnTool, spawnHandler)
+
+	stdinTool := mcp.NewTool(
+		"proc.stdin",
+		mcp.WithDescription("Write to stdin of a spawned process"),
+		mcp.WithInputSchema[proc.StdinRequest](),
+	)
+	stdinHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args proc.StdinRequest) (*mcp.CallToolResult, error) {
+		resp := proc.Stdin(ctx, args)
+		return mcp.NewToolResultStructured(resp, "proc.stdin result"), nil
+	})
+	s.AddTool(stdinTool, stdinHandler)
+
+	waitTool := mcp.NewTool(
+		"proc.wait",
+		mcp.WithDescription("Wait for a spawned process to exit"),
+		mcp.WithInputSchema[proc.WaitRequest](),
+	)
+	waitHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args proc.WaitRequest) (*mcp.CallToolResult, error) {
+		resp := proc.Wait(ctx, args)
+		return mcp.NewToolResultStructured(resp, "proc.wait result"), nil
+	})
+	s.AddTool(waitTool, waitHandler)
+
+	killTool := mcp.NewTool(
+		"proc.kill",
+		mcp.WithDescription("Send a signal to a spawned process"),
+		mcp.WithInputSchema[proc.KillRequest](),
+	)
+	killHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args proc.KillRequest) (*mcp.CallToolResult, error) {
+		resp := proc.Kill(ctx, args)
+		return mcp.NewToolResultStructured(resp, "proc.kill result"), nil
+	})
+	s.AddTool(killTool, killHandler)
+
+	listTool := mcp.NewTool(
+		"proc.list",
+		mcp.WithDescription("List spawned processes"),
+		mcp.WithInputSchema[proc.ListRequest](),
+	)
+	listHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args proc.ListRequest) (*mcp.CallToolResult, error) {
+		resp := proc.List(ctx, args)
+		return mcp.NewToolResultStructured(resp, "proc.list result"), nil
+	})
+	s.AddTool(listTool, listHandler)
 
 	// ---- context & signals
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
