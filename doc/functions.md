@@ -35,6 +35,9 @@ List of functions exposed by `mcp-shell`.
 | `pdf.extract_text` | `path`, `layout?` (`raw`\|`layout`\|`html`), `max_bytes?` | `{text,truncated,duration_ms,error?}` | Extract text from a PDF |
 | `spreadsheet.to_csv` | `path`, `sheet?` (name or index), `max_bytes?` | `{csv,truncated,duration_ms,error?}` | Convert a spreadsheet sheet to CSV |
 | `doc.metadata` | `path` | `{mime,pages?,words?,created?,modified?,duration_ms,error?}` | Retrieve document metadata |
+| `image.convert` | `src_path`, `dest_path`, `ops?[{resize?,crop?,format?,quality?}]` | `{dest_path,duration_ms,error?}` | Convert or transform images via ImageMagick |
+| `video.transcode` | `src`, `dest`, `codec?`, `crf?`, `start?`, `duration?` | `{dest,duration_ms,error?}` | Transcode video files via ffmpeg |
+| `ocr.extract` | `path`, `lang?`, `max_bytes?` | `{text,truncated,duration_ms,error?}` | Extract text from images via Tesseract |
 | `git.clone` | `repo` (string, required), `dir?`, `depth?`, `timeout_ms?`, `max_bytes?`, `dry_run?` | `{stdout, stderr, exit_code, duration_ms, stdout_truncated, stderr_truncated, error?}` | Clone a git repository |
 | `git.status` | `path` (string, required), `timeout_ms?`, `max_bytes?` | `{stdout, stderr, exit_code, duration_ms, stdout_truncated, stderr_truncated, error?}` | Git status (porcelain) |
 | `git.commit` | `path` (string, required), `message` (string, required), `all?`, `timeout_ms?`, `max_bytes?`, `dry_run?` | `{stdout, stderr, exit_code, duration_ms, stdout_truncated, stderr_truncated, commit?, error?}` | Commit changes |

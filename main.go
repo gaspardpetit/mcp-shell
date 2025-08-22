@@ -18,6 +18,7 @@ import (
 	"github.com/gaspardpetit/mcp-shell/internal/doc"
 	"github.com/gaspardpetit/mcp-shell/internal/fs"
 	"github.com/gaspardpetit/mcp-shell/internal/git"
+	"github.com/gaspardpetit/mcp-shell/internal/media"
 	"github.com/gaspardpetit/mcp-shell/internal/pkgmgr"
 	"github.com/gaspardpetit/mcp-shell/internal/proc"
 	rt "github.com/gaspardpetit/mcp-shell/internal/runtime"
@@ -386,6 +387,41 @@ func main() {
 		return mcp.NewToolResultStructured(resp, "doc.metadata result"), nil
 	})
 	s.AddTool(docMetaTool, docMetaHandler)
+	// image.convert
+	imgConvTool := mcp.NewTool(
+		"image.convert",
+		mcp.WithDescription("Convert or transform images"),
+		mcp.WithInputSchema[media.ImageConvertRequest](),
+	)
+	imgConvHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args media.ImageConvertRequest) (*mcp.CallToolResult, error) {
+		resp := media.ImageConvert(ctx, args)
+		return mcp.NewToolResultStructured(resp, "image.convert result"), nil
+	})
+	s.AddTool(imgConvTool, imgConvHandler)
+
+	// video.transcode
+	videoTool := mcp.NewTool(
+		"video.transcode",
+		mcp.WithDescription("Transcode video files"),
+		mcp.WithInputSchema[media.VideoTranscodeRequest](),
+	)
+	videoHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args media.VideoTranscodeRequest) (*mcp.CallToolResult, error) {
+		resp := media.VideoTranscode(ctx, args)
+		return mcp.NewToolResultStructured(resp, "video.transcode result"), nil
+	})
+	s.AddTool(videoTool, videoHandler)
+
+	// ocr.extract
+	ocrTool := mcp.NewTool(
+		"ocr.extract",
+		mcp.WithDescription("Extract text from images using OCR"),
+		mcp.WithInputSchema[media.OCRRequest](),
+	)
+	ocrHandler := mcp.NewTypedToolHandler(func(ctx context.Context, req mcp.CallToolRequest, args media.OCRRequest) (*mcp.CallToolResult, error) {
+		resp := media.OCRExtract(ctx, args)
+		return mcp.NewToolResultStructured(resp, "ocr.extract result"), nil
+	})
+	s.AddTool(ocrTool, ocrHandler)
 
 	// git.clone
 	cloneTool := mcp.NewTool(

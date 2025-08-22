@@ -1,2 +1,5 @@
 ripgrep
 pandoc
+imagemagick
+ffmpeg
+tesseract-ocr
