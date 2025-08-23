@@ -48,4 +48,4 @@ HEALTHCHECK --interval=30s --timeout=4s --start-period=10s --retries=3 \
     || exit 1
 
 ENTRYPOINT ["/start.sh"]
-CMD ["--transport=http", "--addr=0.0.0.0:3333", "--log-dir=/logs", "--egress=0"]
+CMD ["--transport=http", "--addr=0.0.0.0:3333"]
